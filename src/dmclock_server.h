@@ -537,6 +537,10 @@ namespace crimson {
 	       bool use_prop_delta>
       struct ClientCompare {
 	bool operator()(const ClientRec& n1, const ClientRec& n2) const {
+	  if (n1.idle != n2.idle) {
+	    return n1.idle ? false :true;
+	  }
+
 	  if (n1.has_request()) {
 	    if (n2.has_request()) {
 	      const auto& t1 = n1.next_request().tag;
@@ -717,36 +721,10 @@ namespace crimson {
 	    return NaN;
 	  };
 
-	  double _lowest_prop_tag = fmin(prop_f(ready_heap.top()),
-					 prop_f(limit_heap.top()));
-
-
-	  // existing block
-	  double lowest_prop_tag = NaN; // mark unset value as NaN
-	  for (auto const &c : client_map) {
-	    // don't use ourselves (or anything else that might be
-	    // listed as idle) since we're now in the map
-	    if (!c.second->idle) {
-	      // use either lowest proportion tag or previous proportion tag
-	      if (c.second->has_request()) {
-		double p = c.second->next_request().tag.proportion +
-		  c.second->prop_delta;
-		if (std::isnan(lowest_prop_tag) || p < lowest_prop_tag) {
-		  lowest_prop_tag = p;
-		}
-	      }
-	    }
-	  }
-
-	  // assertion -- check if both are NaN or not
-	  assert( std::isnan(_lowest_prop_tag) == std::isnan(lowest_prop_tag));
-
+	  double lowest_prop_tag = fmin(prop_f(ready_heap.top()),
+					prop_f(limit_heap.top()));
 	  if (!std::isnan(lowest_prop_tag)) {
-	    // assertion -- check if both have same value
-	    assert(_lowest_prop_tag == lowest_prop_tag);
 	    client.prop_delta = lowest_prop_tag - time;
-	    // to be uncommented
-	    // client.prop_delta = _lowest_prop_tag - time;
 	  }
 	  client.idle = false;
 	} // if this client was idle

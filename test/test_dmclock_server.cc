@@ -36,130 +36,130 @@ namespace crimson {
       code();
     }
 
-//
-//    TEST(dmclock_server, bad_tag_deathtest) {
-//      using ClientId = int;
-//      using Queue = dmc::PullPriorityQueue<ClientId,Request>;
-//      using QueueRef = std::unique_ptr<Queue>;
-//
-//      ClientId client1 = 17;
-//      ClientId client2 = 18;
-//
-//      double reservation = 0.0;
-//      double weight = 0.0;
-//
-//      dmc::ClientInfo ci1(reservation, weight, 0.0);
-//      dmc::ClientInfo ci2(reservation, weight, 1.0);
-//
-//      auto client_info_f = [&] (ClientId c) -> dmc::ClientInfo {
-//	if (client1 == c) return ci1;
-//	else if (client2 == c) return ci2;
-//	else {
-//	  ADD_FAILURE() << "got request from neither of two clients";
-//	  return ci1; // must return
-//	}
-//      };
-//
-//      QueueRef pq(new Queue(client_info_f, false));
-//      Request req;
-//      ReqParams req_params(1,1);
-//
-//      EXPECT_DEATH_IF_SUPPORTED(pq->add_request(req, client1, req_params),
-//				"Assertion.*reservation.*max_tag.*"
-//				"proportion.*max_tag") <<
-//	"we should fail if a client tries to generate a reservation tag "
-//	"where reservation and proportion are both 0";
-//
-//
-//      EXPECT_DEATH_IF_SUPPORTED(pq->add_request(req, client2, req_params),
-//				"Assertion.*reservation.*max_tag.*"
-//				"proportion.*max_tag") <<
-//	"we should fail if a client tries to generate a reservation tag "
-//	"where reservation and proportion are both 0";
-//    }
-//
-//
-//    TEST(dmclock_server, client_idle_erase) {
-//      using ClientId = int;
-//      using Queue = dmc::PushPriorityQueue<ClientId,Request>;
-//      int client = 17;
-//      double reservation = 100.0;
-//
-//      dmc::ClientInfo ci(reservation, 1.0, 0.0);
-//      auto client_info_f = [&] (ClientId c) -> dmc::ClientInfo { return ci; };
-//      auto server_ready_f = [] () -> bool { return true; };
-//      auto submit_req_f = [] (const ClientId& c,
-//			      std::unique_ptr<Request> req,
-//			      dmc::PhaseType phase) {
-//	// empty; do nothing
-//      };
-//
-//      Queue pq(client_info_f,
-//	       server_ready_f,
-//	       submit_req_f,
-//	       std::chrono::seconds(3),
-//	       std::chrono::seconds(5),
-//	       std::chrono::seconds(2),
-//	       false);
-//
-//      auto lock_pq = [&](std::function<void()> code) {
-//	test_locked(pq.data_mtx, code);
-//      };
-//
-//
-//      /* The timeline should be as follows:
-//       *
-//       *     0 seconds : request created
-//       *
-//       *     1 seconds : map is size 1, idle is false
-//       *
-//       * 2 seconds : clean notes first mark; +2 is base for further calcs
-//       *
-//       * 4 seconds : clean does nothing except makes another mark
-//       *
-//       *   5 seconds : when we're secheduled to idle (+2 + 3)
-//       *
-//       * 6 seconds : clean idles client
-//       *
-//       *   7 seconds : when we're secheduled to erase (+2 + 5)
-//       *
-//       *     7 seconds : verified client is idle
-//       *
-//       * 8 seconds : clean erases client info
-//       *
-//       *     9 seconds : verified client is erased
-//       */
-//
-//      lock_pq([&] () {
-//	  EXPECT_EQ(pq.client_map.size(), 0) << "client map initially has size 0";
-//	});
-//
-//      Request req;
-//      dmc::ReqParams req_params(1, 1);
-//      pq.add_request_time(req, client, req_params, dmc::get_time());
-//
-//      std::this_thread::sleep_for(std::chrono::seconds(1));
-//
-//      lock_pq([&] () {
-//	  EXPECT_EQ(1, pq.client_map.size()) << "client map has 1 after 1 client";
-//	  EXPECT_FALSE(pq.client_map.at(client)->idle) <<
-//	    "initially client map entry shows not idle.";
-//	});
-//
-//      std::this_thread::sleep_for(std::chrono::seconds(6));
-//
-//      lock_pq([&] () {
-//	  EXPECT_TRUE(pq.client_map.at(client)->idle) <<
-//	    "after idle age client map entry shows idle.";
-//	});
-//
-//      std::this_thread::sleep_for(std::chrono::seconds(2));
-//
-//      lock_pq([&] () {
-//	  EXPECT_EQ(0, pq.client_map.size()) <<
-//	    "client map loses its entry after erase age";
-//	});
-//    } // TEST
+
+    TEST(dmclock_server, bad_tag_deathtest) {
+      using ClientId = int;
+      using Queue = dmc::PullPriorityQueue<ClientId,Request>;
+      using QueueRef = std::unique_ptr<Queue>;
+
+      ClientId client1 = 17;
+      ClientId client2 = 18;
+
+      double reservation = 0.0;
+      double weight = 0.0;
+
+      dmc::ClientInfo ci1(reservation, weight, 0.0);
+      dmc::ClientInfo ci2(reservation, weight, 1.0);
+
+      auto client_info_f = [&] (ClientId c) -> dmc::ClientInfo {
+	if (client1 == c) return ci1;
+	else if (client2 == c) return ci2;
+	else {
+	  ADD_FAILURE() << "got request from neither of two clients";
+	  return ci1; // must return
+	}
+      };
+
+      QueueRef pq(new Queue(client_info_f, false));
+      Request req;
+      ReqParams req_params(1,1);
+
+      EXPECT_DEATH_IF_SUPPORTED(pq->add_request(req, client1, req_params),
+				"Assertion.*reservation.*max_tag.*"
+				"proportion.*max_tag") <<
+	"we should fail if a client tries to generate a reservation tag "
+	"where reservation and proportion are both 0";
+
+
+      EXPECT_DEATH_IF_SUPPORTED(pq->add_request(req, client2, req_params),
+				"Assertion.*reservation.*max_tag.*"
+				"proportion.*max_tag") <<
+	"we should fail if a client tries to generate a reservation tag "
+	"where reservation and proportion are both 0";
+    }
+
+
+    TEST(dmclock_server, client_idle_erase) {
+      using ClientId = int;
+      using Queue = dmc::PushPriorityQueue<ClientId,Request>;
+      int client = 17;
+      double reservation = 100.0;
+
+      dmc::ClientInfo ci(reservation, 1.0, 0.0);
+      auto client_info_f = [&] (ClientId c) -> dmc::ClientInfo { return ci; };
+      auto server_ready_f = [] () -> bool { return true; };
+      auto submit_req_f = [] (const ClientId& c,
+			      std::unique_ptr<Request> req,
+			      dmc::PhaseType phase) {
+	// empty; do nothing
+      };
+
+      Queue pq(client_info_f,
+	       server_ready_f,
+	       submit_req_f,
+	       std::chrono::seconds(3),
+	       std::chrono::seconds(5),
+	       std::chrono::seconds(2),
+	       false);
+
+      auto lock_pq = [&](std::function<void()> code) {
+	test_locked(pq.data_mtx, code);
+      };
+
+
+      /* The timeline should be as follows:
+       *
+       *     0 seconds : request created
+       *
+       *     1 seconds : map is size 1, idle is false
+       *
+       * 2 seconds : clean notes first mark; +2 is base for further calcs
+       *
+       * 4 seconds : clean does nothing except makes another mark
+       *
+       *   5 seconds : when we're secheduled to idle (+2 + 3)
+       *
+       * 6 seconds : clean idles client
+       *
+       *   7 seconds : when we're secheduled to erase (+2 + 5)
+       *
+       *     7 seconds : verified client is idle
+       *
+       * 8 seconds : clean erases client info
+       *
+       *     9 seconds : verified client is erased
+       */
+
+      lock_pq([&] () {
+	  EXPECT_EQ(pq.client_map.size(), 0) << "client map initially has size 0";
+	});
+
+      Request req;
+      dmc::ReqParams req_params(1, 1);
+      pq.add_request_time(req, client, req_params, dmc::get_time());
+
+      std::this_thread::sleep_for(std::chrono::seconds(1));
+
+      lock_pq([&] () {
+	  EXPECT_EQ(1, pq.client_map.size()) << "client map has 1 after 1 client";
+	  EXPECT_FALSE(pq.client_map.at(client)->idle) <<
+	    "initially client map entry shows not idle.";
+	});
+
+      std::this_thread::sleep_for(std::chrono::seconds(6));
+
+      lock_pq([&] () {
+	  EXPECT_TRUE(pq.client_map.at(client)->idle) <<
+	    "after idle age client map entry shows idle.";
+	});
+
+      std::this_thread::sleep_for(std::chrono::seconds(2));
+
+      lock_pq([&] () {
+	  EXPECT_EQ(0, pq.client_map.size()) <<
+	    "client map loses its entry after erase age";
+	});
+    } // TEST
 
     TEST(dmclock_server, client_idle_activation) {
       using ClientId = int;
@@ -244,7 +244,7 @@ namespace crimson {
       };
 
 
-      auto add_f = [&](ClientId& cl, int count = 1, Time t = dmc::get_time(),  bool should_print = true) {
+      auto add_f = [&](ClientId& cl, int count = 1, Time t = dmc::get_time(),  bool should_print = false) {
 	++pq->tick;
 	bool is_new = false;
 	Queue::ClientRec* temp_client;
@@ -285,7 +285,7 @@ namespace crimson {
 	}
       };
 
-      auto pop_f = [&] (ClientId& cl, bool should_print = true) {
+      auto pop_f = [&] (ClientId& cl, bool should_print = false) {
 	Queue::PullReq pr = pq->pull_request();
 	EXPECT_TRUE(pr.is_retn());
 	EXPECT_EQ(cl, pr.get_retn().client);
@@ -295,7 +295,7 @@ namespace crimson {
 	}
       };
 
-      auto just_pop_f = [&] (bool should_print = true) {
+      auto just_pop_f = [&] (bool should_print = false) {
 	Queue::PullReq pr = pq->pull_request();
 	if(pr.is_retn()){
 	  if (should_print) {
@@ -372,28 +372,28 @@ namespace crimson {
       add_f(client3, 3);
 
       pop_f(client3);
-      print_all_f();
+      //print_all_f();
 
       // another client comes
       add_f(client4, 2);
 
       std::this_thread::sleep_for(std::chrono::milliseconds(250));
-      print_all_f();
+      //print_all_f();
 
       pop_f(client4);
       pop_f(client2);
-      print_all_f();
+      //print_all_f();
 
       std::this_thread::sleep_for(std::chrono::milliseconds(250));
       pop_f(client3);
       pop_f(client1);
-      print_all_f();
+      //print_all_f();
 
-      //add another client -- all clients are ready
+      //add another client
       add_f(client5);
-      print_all_f();
+      //print_all_f();
 
-      // pop-off all request
+      // pop-off all requests
       size_t count = pq->request_count();
       while (count != 0) {
 	auto p = pq->pull_request();
@@ -407,12 +407,15 @@ namespace crimson {
 
       // all clients are now idle
       std::this_thread::sleep_for(std::chrono::milliseconds(6500));
-      print_all_f();
+      //print_all_f();
 
+      // activate idle clients one by one
       add_f(client2);
       std::this_thread::sleep_for(std::chrono::milliseconds(250));
-      print_all_f();
+      //print_all_f();
 
+      // only one client is active and has_request.
+      // without the recent modification in ClientCompare, add_t(client3) will fail
       add_f(client3);
       std::this_thread::sleep_for(std::chrono::milliseconds(250));
 
@@ -421,16 +424,16 @@ namespace crimson {
 
       add_f(client5);
       std::this_thread::sleep_for(std::chrono::milliseconds(250));
-      print_all_f();
+      //print_all_f();
       std::this_thread::sleep_for(std::chrono::milliseconds(250));
 
       add_f(client6);
-      print_all_f();
+      //print_all_f();
       std::this_thread::sleep_for(std::chrono::milliseconds(250));
 
       just_pop_f();
 
-      print_all_f();
+      //print_all_f();
 
 
 
@@ -494,501 +497,501 @@ namespace crimson {
     } // TEST
 #endif
 
-//
-//    TEST(dmclock_server, remove_by_req_filter) {
-//      struct MyReq {
-//	int id;
-//
-//	MyReq(int _id) :
-//	  id(_id)
-//	{
-//	  // empty
-//	}
-//      }; // MyReq
-//
-//      using ClientId = int;
-//      using Queue = dmc::PullPriorityQueue<ClientId,MyReq>;
-//
-//      ClientId client1 = 17;
-//      ClientId client2 = 98;
-//
-//      dmc::ClientInfo info1(0.0, 1.0, 0.0);
-//
-//      auto client_info_f = [&] (ClientId c) -> dmc::ClientInfo {
-//	return info1;
-//      };
-//
-//      Queue pq(client_info_f, true);
-//
-//      EXPECT_EQ(0, pq.client_count());
-//      EXPECT_EQ(0, pq.request_count());
-//
-//      ReqParams req_params(1,1);
-//
-//      pq.add_request(MyReq(1), client1, req_params);
-//      pq.add_request(MyReq(11), client1, req_params);
-//      pq.add_request(MyReq(2), client2, req_params);
-//      pq.add_request(MyReq(0), client2, req_params);
-//      pq.add_request(MyReq(13), client2, req_params);
-//      pq.add_request(MyReq(2), client2, req_params);
-//      pq.add_request(MyReq(13), client2, req_params);
-//      pq.add_request(MyReq(98), client2, req_params);
-//      pq.add_request(MyReq(44), client1, req_params);
-//
-//      EXPECT_EQ(2, pq.client_count());
-//      EXPECT_EQ(9, pq.request_count());
-//
-//      pq.remove_by_req_filter([](const MyReq& r) -> bool {return 1 == r.id % 2;});
-//
-//      EXPECT_EQ(5, pq.request_count());
-//
-//      std::list<MyReq> capture;
-//      pq.remove_by_req_filter([](const MyReq& r) -> bool {return 0 == r.id % 2;},
-//			      capture);
-//
-//      EXPECT_EQ(0, pq.request_count());
-//      EXPECT_EQ(5, capture.size());
-//      int total = 0;
-//      for (auto i : capture) {
-//	total += i.id;
-//      }
-//      EXPECT_EQ(146, total) << " sum of captured items should be 146";
-//    } // TEST
-//
-//
-//    TEST(dmclock_server, remove_by_req_filter_ordering) {
-//      struct MyReq {
-//	int id;
-//
-//	MyReq(int _id) :
-//	  id(_id)
-//	{
-//	  // empty
-//	}
-//      }; // MyReq
-//
-//      using ClientId = int;
-//      using Queue = dmc::PullPriorityQueue<ClientId,MyReq>;
-//
-//      ClientId client1 = 17;
-//
-//      dmc::ClientInfo info1(0.0, 1.0, 0.0);
-//
-//      auto client_info_f = [&] (ClientId c) -> dmc::ClientInfo {
-//	return info1;
-//      };
-//
-//      Queue pq(client_info_f, true);
-//
-//      EXPECT_EQ(0, pq.client_count());
-//      EXPECT_EQ(0, pq.request_count());
-//
-//      ReqParams req_params(1,1);
-//
-//      pq.add_request(MyReq(1), client1, req_params);
-//      pq.add_request(MyReq(2), client1, req_params);
-//      pq.add_request(MyReq(3), client1, req_params);
-//      pq.add_request(MyReq(4), client1, req_params);
-//      pq.add_request(MyReq(5), client1, req_params);
-//      pq.add_request(MyReq(6), client1, req_params);
-//
-//      EXPECT_EQ(1, pq.client_count());
-//      EXPECT_EQ(6, pq.request_count());
-//
-//      // now remove odd ids in forward order
-//
-//      std::vector<MyReq> capture;
-//      pq.remove_by_req_filter([](const MyReq& r) -> bool {return 1 == r.id % 2;},
-//			      capture);
-//
-//      EXPECT_EQ(3, pq.request_count());
-//      EXPECT_EQ(3, capture.size());
-//      EXPECT_EQ(1, capture[0].id) << "items should come out in forward order";
-//      EXPECT_EQ(3, capture[1].id) << "items should come out in forward order";
-//      EXPECT_EQ(5, capture[2].id) << "items should come out in forward order";
-//
-//      // now remove even ids in reverse order
-//
-//      std::vector<MyReq> capture2;
-//      pq.remove_by_req_filter([](const MyReq& r) -> bool {return 0 == r.id % 2;},
-//			      capture2,
-//			      true);
-//      EXPECT_EQ(0, pq.request_count());
-//      EXPECT_EQ(3, capture2.size());
-//      EXPECT_EQ(6, capture2[0].id) << "items should come out in reverse order";
-//      EXPECT_EQ(4, capture2[1].id) << "items should come out in reverse order";
-//      EXPECT_EQ(2, capture2[2].id) << "items should come out in reverse order";
-//    } // TEST
-//
-//
-//    TEST(dmclock_server, remove_by_client) {
-//      struct MyReq {
-//	int id;
-//
-//	MyReq(int _id) :
-//	  id(_id)
-//	{
-//	  // empty
-//	}
-//      }; // MyReq
-//
-//      using ClientId = int;
-//      using Queue = dmc::PullPriorityQueue<ClientId,MyReq>;
-//
-//      ClientId client1 = 17;
-//      ClientId client2 = 98;
-//
-//      dmc::ClientInfo info1(0.0, 1.0, 0.0);
-//
-//      auto client_info_f = [&] (ClientId c) -> dmc::ClientInfo {
-//	return info1;
-//      };
-//
-//      Queue pq(client_info_f, true);
-//
-//      EXPECT_EQ(0, pq.client_count());
-//      EXPECT_EQ(0, pq.request_count());
-//
-//      ReqParams req_params(1,1);
-//
-//      pq.add_request(MyReq(1), client1, req_params);
-//      pq.add_request(MyReq(11), client1, req_params);
-//      pq.add_request(MyReq(2), client2, req_params);
-//      pq.add_request(MyReq(0), client2, req_params);
-//      pq.add_request(MyReq(13), client2, req_params);
-//      pq.add_request(MyReq(2), client2, req_params);
-//      pq.add_request(MyReq(13), client2, req_params);
-//      pq.add_request(MyReq(98), client2, req_params);
-//      pq.add_request(MyReq(44), client1, req_params);
-//
-//      EXPECT_EQ(2, pq.client_count());
-//      EXPECT_EQ(9, pq.request_count());
-//
-//      std::list<MyReq> removed;
-//
-//      pq.remove_by_client(client1, removed);
-//
-//      EXPECT_EQ(3, removed.size());
-//      EXPECT_EQ(1, removed.front().id);
-//      removed.pop_front();
-//      EXPECT_EQ(11, removed.front().id);
-//      removed.pop_front();
-//      EXPECT_EQ(44, removed.front().id);
-//      removed.pop_front();
-//
-//      EXPECT_EQ(6, pq.request_count());
-//
-//      Queue::PullReq pr = pq.pull_request();
-//      EXPECT_TRUE(pr.is_retn());
-//      EXPECT_EQ(2, pr.get_retn().request->id);
-//
-//      pr = pq.pull_request();
-//      EXPECT_TRUE(pr.is_retn());
-//      EXPECT_EQ(0, pr.get_retn().request->id);
-//
-//      pq.remove_by_client(client2);
-//      EXPECT_EQ(0, pq.request_count()) <<
-//	"after second client removed, none left";
-//    } // TEST
-//
-//
-//    TEST(dmclock_server_pull, pull_weight) {
-//      using ClientId = int;
-//      using Queue = dmc::PullPriorityQueue<ClientId,Request>;
-//      using QueueRef = std::unique_ptr<Queue>;
-//
-//      ClientId client1 = 17;
-//      ClientId client2 = 98;
-//
-//      dmc::ClientInfo info1(0.0, 1.0, 0.0);
-//      dmc::ClientInfo info2(0.0, 2.0, 0.0);
-//
-//      QueueRef pq;
-//
-//      auto client_info_f = [&] (ClientId c) -> dmc::ClientInfo {
-//	if (client1 == c) return info1;
-//	else if (client2 == c) return info2;
-//	else {
-//	  ADD_FAILURE() << "client info looked up for non-existant client";
-//	  return info1;
-//	}
-//      };
-//
-//      pq = QueueRef(new Queue(client_info_f, false));
-//
-//      Request req;
-//      ReqParams req_params(1,1);
-//
-//      auto now = dmc::get_time();
-//
-//      for (int i = 0; i < 5; ++i) {
-//	pq->add_request(req, client1, req_params);
-//	pq->add_request(req, client2, req_params);
-//	now += 0.0001;
-//      }
-//
-//      int c1_count = 0;
-//      int c2_count = 0;
-//      for (int i = 0; i < 6; ++i) {
-//	Queue::PullReq pr = pq->pull_request();
-//	EXPECT_EQ(Queue::NextReqType::returning, pr.type);
-//	auto& retn = boost::get<Queue::PullReq::Retn>(pr.data);
-//
-//	if (client1 == retn.client) ++c1_count;
-//	else if (client2 == retn.client) ++c2_count;
-//	else ADD_FAILURE() << "got request from neither of two clients";
-//
-//	EXPECT_EQ(PhaseType::priority, retn.phase);
-//      }
-//
-//      EXPECT_EQ(2, c1_count) <<
-//	"one-third of request should have come from first client";
-//      EXPECT_EQ(4, c2_count) <<
-//	"two-thirds of request should have come from second client";
-//    }
-//
-//
-//    TEST(dmclock_server_pull, pull_reservation) {
-//      using ClientId = int;
-//      using Queue = dmc::PullPriorityQueue<ClientId,Request>;
-//      using QueueRef = std::unique_ptr<Queue>;
-//
-//      ClientId client1 = 52;
-//      ClientId client2 = 8;
-//
-//      dmc::ClientInfo info1(2.0, 0.0, 0.0);
-//      dmc::ClientInfo info2(1.0, 0.0, 0.0);
-//
-//      auto client_info_f = [&] (ClientId c) -> dmc::ClientInfo {
-//	if (client1 == c) return info1;
-//	else if (client2 == c) return info2;
-//	else {
-//	  ADD_FAILURE() << "client info looked up for non-existant client";
-//	  return info1;
-//	}
-//      };
-//
-//      QueueRef pq(new Queue(client_info_f, false));
-//
-//      Request req;
-//      ReqParams req_params(1,1);
-//
-//      // make sure all times are well before now
-//      auto old_time = dmc::get_time() - 100.0;
-//
-//      for (int i = 0; i < 5; ++i) {
-//	pq->add_request_time(req, client1, req_params, old_time);
-//	pq->add_request_time(req, client2, req_params, old_time);
-//	old_time += 0.001;
-//      }
-//
-//      int c1_count = 0;
-//      int c2_count = 0;
-//
-//      for (int i = 0; i < 6; ++i) {
-//	Queue::PullReq pr = pq->pull_request();
-//	EXPECT_EQ(Queue::NextReqType::returning, pr.type);
-//	auto& retn = boost::get<Queue::PullReq::Retn>(pr.data);
-//
-//	if (client1 == retn.client) ++c1_count;
-//	else if (client2 == retn.client) ++c2_count;
-//	else ADD_FAILURE() << "got request from neither of two clients";
-//
-//	EXPECT_EQ(PhaseType::reservation, retn.phase);
-//      }
-//
-//      EXPECT_EQ(4, c1_count) <<
-//	"two-thirds of request should have come from first client";
-//      EXPECT_EQ(2, c2_count) <<
-//	"one-third of request should have come from second client";
-//    } // dmclock_server_pull.pull_reservation
-//
-//
-//    // This test shows what happens when a request can be ready (under
-//    // limit) but not schedulable since proportion tag is 0. We expect
-//    // to get some future and none responses.
-//    TEST(dmclock_server_pull, ready_and_under_limit) {
-//      using ClientId = int;
-//      using Queue = dmc::PullPriorityQueue<ClientId,Request>;
-//      using QueueRef = std::unique_ptr<Queue>;
-//
-//      ClientId client1 = 52;
-//      ClientId client2 = 8;
-//
-//      dmc::ClientInfo info1(1.0, 0.0, 0.0);
-//      dmc::ClientInfo info2(1.0, 0.0, 0.0);
-//
-//      auto client_info_f = [&] (ClientId c) -> dmc::ClientInfo {
-//	if (client1 == c) return info1;
-//	else if (client2 == c) return info2;
-//	else {
-//	  ADD_FAILURE() << "client info looked up for non-existant client";
-//	  return info1;
-//	}
-//      };
-//
-//      QueueRef pq(new Queue(client_info_f, false));
-//
-//      Request req;
-//      ReqParams req_params(1,1);
-//
-//      // make sure all times are well before now
-//      auto start_time = dmc::get_time() - 100.0;
-//
-//      // add six requests; for same client reservations spaced one apart
-//      for (int i = 0; i < 3; ++i) {
-//	pq->add_request_time(req, client1, req_params, start_time);
-//	pq->add_request_time(req, client2, req_params, start_time);
-//      }
-//
-//      Queue::PullReq pr = pq->pull_request(start_time + 0.5);
-//      EXPECT_EQ(Queue::NextReqType::returning, pr.type);
-//
-//      pr = pq->pull_request(start_time + 0.5);
-//      EXPECT_EQ(Queue::NextReqType::returning, pr.type);
-//
-//      pr = pq->pull_request(start_time + 0.5);
-//      EXPECT_EQ(Queue::NextReqType::future, pr.type) <<
-//	"too soon for next reservation";
-//
-//      pr = pq->pull_request(start_time + 1.5);
-//      EXPECT_EQ(Queue::NextReqType::returning, pr.type);
-//
-//      pr = pq->pull_request(start_time + 1.5);
-//      EXPECT_EQ(Queue::NextReqType::returning, pr.type);
-//
-//      pr = pq->pull_request(start_time + 1.5);
-//      EXPECT_EQ(Queue::NextReqType::future, pr.type) <<
-//	"too soon for next reservation";
-//
-//      pr = pq->pull_request(start_time + 2.5);
-//      EXPECT_EQ(Queue::NextReqType::returning, pr.type);
-//
-//      pr = pq->pull_request(start_time + 2.5);
-//      EXPECT_EQ(Queue::NextReqType::returning, pr.type);
-//
-//      pr = pq->pull_request(start_time + 2.5);
-//      EXPECT_EQ(Queue::NextReqType::none, pr.type) << "no more requests left";
-//    }
-//
-//
-//    TEST(dmclock_server_pull, pull_none) {
-//      using ClientId = int;
-//      using Queue = dmc::PullPriorityQueue<ClientId,Request>;
-//      using QueueRef = std::unique_ptr<Queue>;
-//
-//      dmc::ClientInfo info(1.0, 1.0, 1.0);
-//
-//      auto client_info_f = [&] (ClientId c) -> dmc::ClientInfo {
-//	return info;
-//      };
-//
-//      QueueRef pq(new Queue(client_info_f, false));
-//
-//      Request req;
-//      ReqParams req_params(1,1);
-//
-//      auto now = dmc::get_time();
-//
-//      Queue::PullReq pr = pq->pull_request(now + 100);
-//
-//      EXPECT_EQ(Queue::NextReqType::none, pr.type);
-//    }
-//
-//
-//    TEST(dmclock_server_pull, pull_future) {
-//      using ClientId = int;
-//      using Queue = dmc::PullPriorityQueue<ClientId,Request>;
-//      using QueueRef = std::unique_ptr<Queue>;
-//
-//      ClientId client1 = 52;
-//      ClientId client2 = 8;
-//
-//      dmc::ClientInfo info(1.0, 0.0, 1.0);
-//
-//      auto client_info_f = [&] (ClientId c) -> dmc::ClientInfo {
-//	return info;
-//      };
-//
-//      QueueRef pq(new Queue(client_info_f, false));
-//
-//      Request req;
-//      ReqParams req_params(1,1);
-//
-//      // make sure all times are well before now
-//      auto now = dmc::get_time();
-//
-//      pq->add_request_time(req, client1, req_params, now + 100);
-//      Queue::PullReq pr = pq->pull_request(now);
-//
-//      EXPECT_EQ(Queue::NextReqType::future, pr.type);
-//
-//      Time when = boost::get<Time>(pr.data);
-//      EXPECT_EQ(now + 100, when);
-//    }
-//
-//
-//    TEST(dmclock_server_pull, pull_future_limit_break_weight) {
-//      using ClientId = int;
-//      using Queue = dmc::PullPriorityQueue<ClientId,Request>;
-//      using QueueRef = std::unique_ptr<Queue>;
-//
-//      ClientId client1 = 52;
-//      ClientId client2 = 8;
-//
-//      dmc::ClientInfo info(0.0, 1.0, 1.0);
-//
-//      auto client_info_f = [&] (ClientId c) -> dmc::ClientInfo {
-//	return info;
-//      };
-//
-//      QueueRef pq(new Queue(client_info_f, true));
-//
-//      Request req;
-//      ReqParams req_params(1,1);
-//
-//      // make sure all times are well before now
-//      auto now = dmc::get_time();
-//
-//      pq->add_request_time(req, client1, req_params, now + 100);
-//      Queue::PullReq pr = pq->pull_request(now);
-//
-//      EXPECT_EQ(Queue::NextReqType::returning, pr.type);
-//
-//      auto& retn = boost::get<Queue::PullReq::Retn>(pr.data);
-//      EXPECT_EQ(client1, retn.client);
-//    }
-//
-//
-//    TEST(dmclock_server_pull, pull_future_limit_break_reservation) {
-//      using ClientId = int;
-//      using Queue = dmc::PullPriorityQueue<ClientId,Request>;
-//      using QueueRef = std::unique_ptr<Queue>;
-//
-//      ClientId client1 = 52;
-//      ClientId client2 = 8;
-//
-//      dmc::ClientInfo info(1.0, 0.0, 1.0);
-//
-//      auto client_info_f = [&] (ClientId c) -> dmc::ClientInfo {
-//	return info;
-//      };
-//
-//      QueueRef pq(new Queue(client_info_f, true));
-//
-//      Request req;
-//      ReqParams req_params(1,1);
-//
-//      // make sure all times are well before now
-//      auto now = dmc::get_time();
-//
-//      pq->add_request_time(req, client1, req_params, now + 100);
-//      Queue::PullReq pr = pq->pull_request(now);
-//
-//      EXPECT_EQ(Queue::NextReqType::returning, pr.type);
-//
-//      auto& retn = boost::get<Queue::PullReq::Retn>(pr.data);
-//      EXPECT_EQ(client1, retn.client);
-//    }
+
+    TEST(dmclock_server, remove_by_req_filter) {
+      struct MyReq {
+	int id;
+
+	MyReq(int _id) :
+	  id(_id)
+	{
+	  // empty
+	}
+      }; // MyReq
+
+      using ClientId = int;
+      using Queue = dmc::PullPriorityQueue<ClientId,MyReq>;
+
+      ClientId client1 = 17;
+      ClientId client2 = 98;
+
+      dmc::ClientInfo info1(0.0, 1.0, 0.0);
+
+      auto client_info_f = [&] (ClientId c) -> dmc::ClientInfo {
+	return info1;
+      };
+
+      Queue pq(client_info_f, true);
+
+      EXPECT_EQ(0, pq.client_count());
+      EXPECT_EQ(0, pq.request_count());
+
+      ReqParams req_params(1,1);
+
+      pq.add_request(MyReq(1), client1, req_params);
+      pq.add_request(MyReq(11), client1, req_params);
+      pq.add_request(MyReq(2), client2, req_params);
+      pq.add_request(MyReq(0), client2, req_params);
+      pq.add_request(MyReq(13), client2, req_params);
+      pq.add_request(MyReq(2), client2, req_params);
+      pq.add_request(MyReq(13), client2, req_params);
+      pq.add_request(MyReq(98), client2, req_params);
+      pq.add_request(MyReq(44), client1, req_params);
+
+      EXPECT_EQ(2, pq.client_count());
+      EXPECT_EQ(9, pq.request_count());
+
+      pq.remove_by_req_filter([](const MyReq& r) -> bool {return 1 == r.id % 2;});
+
+      EXPECT_EQ(5, pq.request_count());
+
+      std::list<MyReq> capture;
+      pq.remove_by_req_filter([](const MyReq& r) -> bool {return 0 == r.id % 2;},
+			      capture);
+
+      EXPECT_EQ(0, pq.request_count());
+      EXPECT_EQ(5, capture.size());
+      int total = 0;
+      for (auto i : capture) {
+	total += i.id;
+      }
+      EXPECT_EQ(146, total) << " sum of captured items should be 146";
+    } // TEST
+
+
+    TEST(dmclock_server, remove_by_req_filter_ordering) {
+      struct MyReq {
+	int id;
+
+	MyReq(int _id) :
+	  id(_id)
+	{
+	  // empty
+	}
+      }; // MyReq
+
+      using ClientId = int;
+      using Queue = dmc::PullPriorityQueue<ClientId,MyReq>;
+
+      ClientId client1 = 17;
+
+      dmc::ClientInfo info1(0.0, 1.0, 0.0);
+
+      auto client_info_f = [&] (ClientId c) -> dmc::ClientInfo {
+	return info1;
+      };
+
+      Queue pq(client_info_f, true);
+
+      EXPECT_EQ(0, pq.client_count());
+      EXPECT_EQ(0, pq.request_count());
+
+      ReqParams req_params(1,1);
+
+      pq.add_request(MyReq(1), client1, req_params);
+      pq.add_request(MyReq(2), client1, req_params);
+      pq.add_request(MyReq(3), client1, req_params);
+      pq.add_request(MyReq(4), client1, req_params);
+      pq.add_request(MyReq(5), client1, req_params);
+      pq.add_request(MyReq(6), client1, req_params);
+
+      EXPECT_EQ(1, pq.client_count());
+      EXPECT_EQ(6, pq.request_count());
+
+      // now remove odd ids in forward order
+
+      std::vector<MyReq> capture;
+      pq.remove_by_req_filter([](const MyReq& r) -> bool {return 1 == r.id % 2;},
+			      capture);
+
+      EXPECT_EQ(3, pq.request_count());
+      EXPECT_EQ(3, capture.size());
+      EXPECT_EQ(1, capture[0].id) << "items should come out in forward order";
+      EXPECT_EQ(3, capture[1].id) << "items should come out in forward order";
+      EXPECT_EQ(5, capture[2].id) << "items should come out in forward order";
+
+      // now remove even ids in reverse order
+
+      std::vector<MyReq> capture2;
+      pq.remove_by_req_filter([](const MyReq& r) -> bool {return 0 == r.id % 2;},
+			      capture2,
+			      true);
+      EXPECT_EQ(0, pq.request_count());
+      EXPECT_EQ(3, capture2.size());
+      EXPECT_EQ(6, capture2[0].id) << "items should come out in reverse order";
+      EXPECT_EQ(4, capture2[1].id) << "items should come out in reverse order";
+      EXPECT_EQ(2, capture2[2].id) << "items should come out in reverse order";
+    } // TEST
+
+
+    TEST(dmclock_server, remove_by_client) {
+      struct MyReq {
+	int id;
+
+	MyReq(int _id) :
+	  id(_id)
+	{
+	  // empty
+	}
+      }; // MyReq
+
+      using ClientId = int;
+      using Queue = dmc::PullPriorityQueue<ClientId,MyReq>;
+
+      ClientId client1 = 17;
+      ClientId client2 = 98;
+
+      dmc::ClientInfo info1(0.0, 1.0, 0.0);
+
+      auto client_info_f = [&] (ClientId c) -> dmc::ClientInfo {
+	return info1;
+      };
+
+      Queue pq(client_info_f, true);
+
+      EXPECT_EQ(0, pq.client_count());
+      EXPECT_EQ(0, pq.request_count());
+
+      ReqParams req_params(1,1);
+
+      pq.add_request(MyReq(1), client1, req_params);
+      pq.add_request(MyReq(11), client1, req_params);
+      pq.add_request(MyReq(2), client2, req_params);
+      pq.add_request(MyReq(0), client2, req_params);
+      pq.add_request(MyReq(13), client2, req_params);
+      pq.add_request(MyReq(2), client2, req_params);
+      pq.add_request(MyReq(13), client2, req_params);
+      pq.add_request(MyReq(98), client2, req_params);
+      pq.add_request(MyReq(44), client1, req_params);
+
+      EXPECT_EQ(2, pq.client_count());
+      EXPECT_EQ(9, pq.request_count());
+
+      std::list<MyReq> removed;
+
+      pq.remove_by_client(client1, removed);
+
+      EXPECT_EQ(3, removed.size());
+      EXPECT_EQ(1, removed.front().id);
+      removed.pop_front();
+      EXPECT_EQ(11, removed.front().id);
+      removed.pop_front();
+      EXPECT_EQ(44, removed.front().id);
+      removed.pop_front();
+
+      EXPECT_EQ(6, pq.request_count());
+
+      Queue::PullReq pr = pq.pull_request();
+      EXPECT_TRUE(pr.is_retn());
+      EXPECT_EQ(2, pr.get_retn().request->id);
+
+      pr = pq.pull_request();
+      EXPECT_TRUE(pr.is_retn());
+      EXPECT_EQ(0, pr.get_retn().request->id);
+
+      pq.remove_by_client(client2);
+      EXPECT_EQ(0, pq.request_count()) <<
+	"after second client removed, none left";
+    } // TEST
+
+
+    TEST(dmclock_server_pull, pull_weight) {
+      using ClientId = int;
+      using Queue = dmc::PullPriorityQueue<ClientId,Request>;
+      using QueueRef = std::unique_ptr<Queue>;
+
+      ClientId client1 = 17;
+      ClientId client2 = 98;
+
+      dmc::ClientInfo info1(0.0, 1.0, 0.0);
+      dmc::ClientInfo info2(0.0, 2.0, 0.0);
+
+      QueueRef pq;
+
+      auto client_info_f = [&] (ClientId c) -> dmc::ClientInfo {
+	if (client1 == c) return info1;
+	else if (client2 == c) return info2;
+	else {
+	  ADD_FAILURE() << "client info looked up for non-existant client";
+	  return info1;
+	}
+      };
+
+      pq = QueueRef(new Queue(client_info_f, false));
+
+      Request req;
+      ReqParams req_params(1,1);
+
+      auto now = dmc::get_time();
+
+      for (int i = 0; i < 5; ++i) {
+	pq->add_request(req, client1, req_params);
+	pq->add_request(req, client2, req_params);
+	now += 0.0001;
+      }
+
+      int c1_count = 0;
+      int c2_count = 0;
+      for (int i = 0; i < 6; ++i) {
+	Queue::PullReq pr = pq->pull_request();
+	EXPECT_EQ(Queue::NextReqType::returning, pr.type);
+	auto& retn = boost::get<Queue::PullReq::Retn>(pr.data);
+
+	if (client1 == retn.client) ++c1_count;
+	else if (client2 == retn.client) ++c2_count;
+	else ADD_FAILURE() << "got request from neither of two clients";
+
+	EXPECT_EQ(PhaseType::priority, retn.phase);
+      }
+
+      EXPECT_EQ(2, c1_count) <<
+	"one-third of request should have come from first client";
+      EXPECT_EQ(4, c2_count) <<
+	"two-thirds of request should have come from second client";
+    }
+
+
+    TEST(dmclock_server_pull, pull_reservation) {
+      using ClientId = int;
+      using Queue = dmc::PullPriorityQueue<ClientId,Request>;
+      using QueueRef = std::unique_ptr<Queue>;
+
+      ClientId client1 = 52;
+      ClientId client2 = 8;
+
+      dmc::ClientInfo info1(2.0, 0.0, 0.0);
+      dmc::ClientInfo info2(1.0, 0.0, 0.0);
+
+      auto client_info_f = [&] (ClientId c) -> dmc::ClientInfo {
+	if (client1 == c) return info1;
+	else if (client2 == c) return info2;
+	else {
+	  ADD_FAILURE() << "client info looked up for non-existant client";
+	  return info1;
+	}
+      };
+
+      QueueRef pq(new Queue(client_info_f, false));
+
+      Request req;
+      ReqParams req_params(1,1);
+
+      // make sure all times are well before now
+      auto old_time = dmc::get_time() - 100.0;
+
+      for (int i = 0; i < 5; ++i) {
+	pq->add_request_time(req, client1, req_params, old_time);
+	pq->add_request_time(req, client2, req_params, old_time);
+	old_time += 0.001;
+      }
+
+      int c1_count = 0;
+      int c2_count = 0;
+
+      for (int i = 0; i < 6; ++i) {
+	Queue::PullReq pr = pq->pull_request();
+	EXPECT_EQ(Queue::NextReqType::returning, pr.type);
+	auto& retn = boost::get<Queue::PullReq::Retn>(pr.data);
+
+	if (client1 == retn.client) ++c1_count;
+	else if (client2 == retn.client) ++c2_count;
+	else ADD_FAILURE() << "got request from neither of two clients";
+
+	EXPECT_EQ(PhaseType::reservation, retn.phase);
+      }
+
+      EXPECT_EQ(4, c1_count) <<
+	"two-thirds of request should have come from first client";
+      EXPECT_EQ(2, c2_count) <<
+	"one-third of request should have come from second client";
+    } // dmclock_server_pull.pull_reservation
+
+
+    // This test shows what happens when a request can be ready (under
+    // limit) but not schedulable since proportion tag is 0. We expect
+    // to get some future and none responses.
+    TEST(dmclock_server_pull, ready_and_under_limit) {
+      using ClientId = int;
+      using Queue = dmc::PullPriorityQueue<ClientId,Request>;
+      using QueueRef = std::unique_ptr<Queue>;
+
+      ClientId client1 = 52;
+      ClientId client2 = 8;
+
+      dmc::ClientInfo info1(1.0, 0.0, 0.0);
+      dmc::ClientInfo info2(1.0, 0.0, 0.0);
+
+      auto client_info_f = [&] (ClientId c) -> dmc::ClientInfo {
+	if (client1 == c) return info1;
+	else if (client2 == c) return info2;
+	else {
+	  ADD_FAILURE() << "client info looked up for non-existant client";
+	  return info1;
+	}
+      };
+
+      QueueRef pq(new Queue(client_info_f, false));
+
+      Request req;
+      ReqParams req_params(1,1);
+
+      // make sure all times are well before now
+      auto start_time = dmc::get_time() - 100.0;
+
+      // add six requests; for same client reservations spaced one apart
+      for (int i = 0; i < 3; ++i) {
+	pq->add_request_time(req, client1, req_params, start_time);
+	pq->add_request_time(req, client2, req_params, start_time);
+      }
+
+      Queue::PullReq pr = pq->pull_request(start_time + 0.5);
+      EXPECT_EQ(Queue::NextReqType::returning, pr.type);
+
+      pr = pq->pull_request(start_time + 0.5);
+      EXPECT_EQ(Queue::NextReqType::returning, pr.type);
+
+      pr = pq->pull_request(start_time + 0.5);
+      EXPECT_EQ(Queue::NextReqType::future, pr.type) <<
+	"too soon for next reservation";
+
+      pr = pq->pull_request(start_time + 1.5);
+      EXPECT_EQ(Queue::NextReqType::returning, pr.type);
+
+      pr = pq->pull_request(start_time + 1.5);
+      EXPECT_EQ(Queue::NextReqType::returning, pr.type);
+
+      pr = pq->pull_request(start_time + 1.5);
+      EXPECT_EQ(Queue::NextReqType::future, pr.type) <<
+	"too soon for next reservation";
+
+      pr = pq->pull_request(start_time + 2.5);
+      EXPECT_EQ(Queue::NextReqType::returning, pr.type);
+
+      pr = pq->pull_request(start_time + 2.5);
+      EXPECT_EQ(Queue::NextReqType::returning, pr.type);
+
+      pr = pq->pull_request(start_time + 2.5);
+      EXPECT_EQ(Queue::NextReqType::none, pr.type) << "no more requests left";
+    }
+
+
+    TEST(dmclock_server_pull, pull_none) {
+      using ClientId = int;
+      using Queue = dmc::PullPriorityQueue<ClientId,Request>;
+      using QueueRef = std::unique_ptr<Queue>;
+
+      dmc::ClientInfo info(1.0, 1.0, 1.0);
+
+      auto client_info_f = [&] (ClientId c) -> dmc::ClientInfo {
+	return info;
+      };
+
+      QueueRef pq(new Queue(client_info_f, false));
+
+      Request req;
+      ReqParams req_params(1,1);
+
+      auto now = dmc::get_time();
+
+      Queue::PullReq pr = pq->pull_request(now + 100);
+
+      EXPECT_EQ(Queue::NextReqType::none, pr.type);
+    }
+
+
+    TEST(dmclock_server_pull, pull_future) {
+      using ClientId = int;
+      using Queue = dmc::PullPriorityQueue<ClientId,Request>;
+      using QueueRef = std::unique_ptr<Queue>;
+
+      ClientId client1 = 52;
+      ClientId client2 = 8;
+
+      dmc::ClientInfo info(1.0, 0.0, 1.0);
+
+      auto client_info_f = [&] (ClientId c) -> dmc::ClientInfo {
+	return info;
+      };
+
+      QueueRef pq(new Queue(client_info_f, false));
+
+      Request req;
+      ReqParams req_params(1,1);
+
+      // make sure all times are well before now
+      auto now = dmc::get_time();
+
+      pq->add_request_time(req, client1, req_params, now + 100);
+      Queue::PullReq pr = pq->pull_request(now);
+
+      EXPECT_EQ(Queue::NextReqType::future, pr.type);
+
+      Time when = boost::get<Time>(pr.data);
+      EXPECT_EQ(now + 100, when);
+    }
+
+
+    TEST(dmclock_server_pull, pull_future_limit_break_weight) {
+      using ClientId = int;
+      using Queue = dmc::PullPriorityQueue<ClientId,Request>;
+      using QueueRef = std::unique_ptr<Queue>;
+
+      ClientId client1 = 52;
+      ClientId client2 = 8;
+
+      dmc::ClientInfo info(0.0, 1.0, 1.0);
+
+      auto client_info_f = [&] (ClientId c) -> dmc::ClientInfo {
+	return info;
+      };
+
+      QueueRef pq(new Queue(client_info_f, true));
+
+      Request req;
+      ReqParams req_params(1,1);
+
+      // make sure all times are well before now
+      auto now = dmc::get_time();
+
+      pq->add_request_time(req, client1, req_params, now + 100);
+      Queue::PullReq pr = pq->pull_request(now);
+
+      EXPECT_EQ(Queue::NextReqType::returning, pr.type);
+
+      auto& retn = boost::get<Queue::PullReq::Retn>(pr.data);
+      EXPECT_EQ(client1, retn.client);
+    }
+
+
+    TEST(dmclock_server_pull, pull_future_limit_break_reservation) {
+      using ClientId = int;
+      using Queue = dmc::PullPriorityQueue<ClientId,Request>;
+      using QueueRef = std::unique_ptr<Queue>;
+
+      ClientId client1 = 52;
+      ClientId client2 = 8;
+
+      dmc::ClientInfo info(1.0, 0.0, 1.0);
+
+      auto client_info_f = [&] (ClientId c) -> dmc::ClientInfo {
+	return info;
+      };
+
+      QueueRef pq(new Queue(client_info_f, true));
+
+      Request req;
+      ReqParams req_params(1,1);
+
+      // make sure all times are well before now
+      auto now = dmc::get_time();
+
+      pq->add_request_time(req, client1, req_params, now + 100);
+      Queue::PullReq pr = pq->pull_request(now);
+
+      EXPECT_EQ(Queue::NextReqType::returning, pr.type);
+
+      auto& retn = boost::get<Queue::PullReq::Retn>(pr.data);
+      EXPECT_EQ(client1, retn.client);
+    }
   } // namespace dmclock
 } // namespace crimson
