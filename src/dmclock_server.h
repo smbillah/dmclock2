@@ -177,9 +177,10 @@ namespace crimson {
       friend std::ostream& operator<<(std::ostream& out,
 				      const RequestTag& tag) {
 	out <<
-	  "{ r:" << format_time(tag.reservation) <<
+	  "{ r:"<< (tag.reservation == max_tag ? "none" : format_time(tag.reservation)) <<
 	  " p:" << format_time(tag.proportion) <<
-	  " l:" << format_time(tag.limit) << " }";
+	  " l:" << (tag.limit == min_tag ? "none" : format_time(tag.limit)) <<
+	  " ready:" << tag.ready <<" }";
 	return out;
       }
     }; // class RequestTag
@@ -193,6 +194,7 @@ namespace crimson {
     template<typename C, typename R>
     class PriorityQueueBase {
       FRIEND_TEST(dmclock_server, client_idle_erase);
+      FRIEND_TEST(dmclock_server, client_idle_activation);
 
     public:
 
@@ -212,6 +214,7 @@ namespace crimson {
 
       class ClientReq {
 	friend PriorityQueueBase;
+	FRIEND_TEST(dmclock_server, client_idle_activation);
 
 	RequestTag tag;
 	C          client_id;
@@ -238,6 +241,7 @@ namespace crimson {
 
       class ClientRec {
 	friend PriorityQueueBase<C,R>;
+	FRIEND_TEST(dmclock_server, client_idle_activation);
 
 	C                     client;
 	RequestTag            prev_tag;
@@ -374,8 +378,15 @@ namespace crimson {
 	friend std::ostream&
 	operator<<(std::ostream& out,
 		   const typename PriorityQueueBase<C,R>::ClientRec& e) {
-	  out << "{ client:" << e.client << " top req: " <<
-	    (e.has_request() ? e.next_request() : "none") << " }";
+	  out << "{ client:" << e.client << " top req: ";
+	  if(e.has_request()){
+	    out << e.next_request();
+	  }
+	  else {
+	    out << "none" ;
+	  }
+	  out << " prop_delta: " << e.prop_delta <<
+	      " idle: "<< e.idle << " }";
 	  return out;
 	}
       }; // class ClientRec
@@ -687,13 +698,30 @@ namespace crimson {
 	  // proportion tag -- O(1) -- or the client with the lowest
 	  // previous proportion tag -- O(n) where n = # clients.
 	  //
-	  // So we don't have to maintain a propotional queue that
+	  // So we don't have to maintain a proportional queue that
 	  // keeps the minimum on proportional tag alone (we're
 	  // instead using a ready queue), we'll have to check each
 	  // client.
 	  //
 	  // The alternative would be to maintain a proportional queue
 	  // (define USE_PROP_TAG) and do an O(1) operation here.
+
+	  // don't use ourselves (or anything else that might be
+	  // listed as idle) since we're now in the map
+
+	  // a proposal
+	  auto prop_f = [](const ClientRec& top) -> double {
+	    if (!top.idle && top.has_request()) {
+	      return top.next_request().tag.proportion + top.prop_delta;
+	    }
+	    return NaN;
+	  };
+
+	  double _lowest_prop_tag = fmin(prop_f(ready_heap.top()),
+					 prop_f(limit_heap.top()));
+
+
+	  // existing block
 	  double lowest_prop_tag = NaN; // mark unset value as NaN
 	  for (auto const &c : client_map) {
 	    // don't use ourselves (or anything else that might be
@@ -709,8 +737,16 @@ namespace crimson {
 	      }
 	    }
 	  }
+
+	  // assertion -- check if both are NaN or not
+	  assert( std::isnan(_lowest_prop_tag) == std::isnan(lowest_prop_tag));
+
 	  if (!std::isnan(lowest_prop_tag)) {
+	    // assertion -- check if both have same value
+	    assert(_lowest_prop_tag == lowest_prop_tag);
 	    client.prop_delta = lowest_prop_tag - time;
+	    // to be uncommented
+	    // client.prop_delta = _lowest_prop_tag - time;
 	  }
 	  client.idle = false;
 	} // if this client was idle
